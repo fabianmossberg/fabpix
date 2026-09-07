@@ -1,17 +1,4 @@
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "lib": ["ES2023", "DOM"],
-    "types": ["node", "bun"],
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "verbatimModuleSyntax": true,
-    "resolveJsonModule": true,
-    "allowImportingTsExtensions": true,
-    "noEmit": true,
-    "skipLibCheck": true
-  },
-  "include": ["src", "test"]
+  "extends": "./tsconfig.base.json",
+  "include": ["packages/*/src", "packages/*/test"]
 }

@@ -1,11 +1,7 @@
 import { existsSync } from "node:fs";
 import { join, relative } from "node:path";
-import {
-  coerceValue, findProjectSource, getPath, globalCandidates, globalConfigPath, loadSettings, readSourceOrEmpty,
-  setPath, writeSource, PROJECT_FILES, TEMPLATE, type Scope, type SettingsSource,
-} from "../config.ts";
-import { ProviderError } from "../providers/types.ts";
 import { bold, dim, green, yellow } from "../render/style.ts";
+import { coerceValue, findProjectSource, getPath, globalCandidates, globalConfigPath, loadSettings, readSourceOrEmpty, setPath, writeSource, PROJECT_FILES, TEMPLATE, type Scope, type SettingsSource, ProviderError } from "@fabianmossberg/fabpix-core";
 
 const out = (s: string) => process.stdout.write(s + "\n");
 

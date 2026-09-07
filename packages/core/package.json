@@ -1,0 +1,31 @@
+{
+  "name": "@fabianmossberg/fabpix-core",
+  "version": "0.1.0",
+  "description": "Shared core for fabpix: photo providers (Pexels, Unsplash), settings, download manifest",
+  "license": "MIT",
+  "author": "Fabian Mossberg",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fabianmossberg/fabpix.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/fabianmossberg/fabpix#readme",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "rm -rf dist && bun build src/index.ts --target=node --outdir=dist && tsc -p tsconfig.build.json && find dist -name '*.d.ts' -exec sed -i.bak 's/\\.ts\";/.js\";/g' {} + && find dist -name '*.bak' -delete",
+    "prepublishOnly": "bun run build"
+  }
+}

@@ -3,9 +3,14 @@
   "release-type": "node",
   "bump-minor-pre-major": true,
   "bump-patch-for-minor-pre-major": false,
-  "include-component-in-tag": false,
   "packages": {
-    ".": {
+    "packages/cli": {
+      "component": "fabpix",
+      "include-component-in-tag": false
+    },
+    "packages/core": {
+      "component": "core",
+      "include-component-in-tag": true,
       "initial-version": "0.1.0"
     }
   }

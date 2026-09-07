@@ -3,7 +3,7 @@ import { renderGridRow, tilesPerRow, tileColumn } from "../src/render/grid.ts";
 import { kittySequence, isPng } from "../src/render/preview.ts";
 import { fittedPageSize, resolveLayout, thumbUrlFor } from "../src/commands/list.ts";
 import { truncateWidth, displayWidth } from "../src/format.ts";
-import type { Photo } from "../src/providers/types.ts";
+import type { Photo } from "@fabianmossberg/fabpix-core";
 
 const opts = { cols: 10, rows: 3, gap: 2, captionRows: 2 };
 

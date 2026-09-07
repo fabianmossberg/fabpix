@@ -1,7 +1,5 @@
-import { loadSettings, resolveApiKey, globalConfigPath, readSourceOrEmpty, writeSource } from "../config.ts";
-import { getProvider, providerNames } from "../providers/index.ts";
-import { ProviderError } from "../providers/types.ts";
 import { bold, dim, green, red } from "../render/style.ts";
+import { loadSettings, resolveApiKey, globalConfigPath, readSourceOrEmpty, writeSource, getProvider, providerNames, ProviderError } from "@fabianmossberg/fabpix-core";
 
 export function authSet(provider: string, key: string): void {
   if (!providerNames().includes(provider)) {
