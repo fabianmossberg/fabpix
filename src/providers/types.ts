@@ -16,6 +16,9 @@ export interface Photo {
   thumbUrl: string;
   /** A larger preview (~1000px) for `show`. */
   previewUrl: string;
+  /** PNG variants of the above, if the provider can supply them (kitty protocol needs PNG). */
+  thumbPngUrl?: string;
+  previewPngUrl?: string;
   /** Named download sizes, e.g. { original, large2x, large, medium, small }. */
   sizes: Record<string, string>;
 }

@@ -20,7 +20,8 @@ export async function showPhoto(provider: Provider, opts: ShowOptions): Promise<
     return;
   }
   const protocol = opts.preview ? detectProtocol() : "none";
-  const bytes = protocol !== "none" ? await fetchBytes(photo.previewUrl).catch(() => undefined) : undefined;
+  const previewUrl = protocol === "kitty" && photo.previewPngUrl ? photo.previewPngUrl : photo.previewUrl;
+  const bytes = protocol !== "none" ? await fetchBytes(previewUrl).catch(() => undefined) : undefined;
 
   const width = Math.max(20, terminalColumns() - opts.cols - 4);
   const lines = [

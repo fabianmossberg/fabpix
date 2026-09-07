@@ -50,11 +50,6 @@ export function blockWithSideText(imageSeq: string, box: PreviewBox, lines: stri
   return out;
 }
 
-/** Simple stacked layout: image, then the text lines beneath it. */
-export function blockStacked(imageOutput: string, lines: string[]): string {
-  return imageOutput + (imageOutput.endsWith("\n") ? "" : "\n") + lines.join("\n") + "\n\n";
-}
-
 /** Zip two column-blocks together line by line (used for chafa's ANSI-art output). */
 export function sideBySide(left: string[], right: string[], leftWidth: number): string {
   const n = Math.max(left.length, right.length);
@@ -68,7 +63,7 @@ export function sideBySide(left: string[], right: string[], leftWidth: number): 
   return rows.join("\n") + "\n\n";
 }
 
-function chafaLines(bytes: Uint8Array, box: PreviewBox): string[] | undefined {
+export function chafaLines(bytes: Uint8Array, box: PreviewBox): string[] | undefined {
   const res = spawnSync("chafa", ["--size", `${box.cols}x${box.rows}`, "--format", "symbols", "-"], {
     input: bytes,
     encoding: "utf8",
@@ -78,17 +73,38 @@ function chafaLines(bytes: Uint8Array, box: PreviewBox): string[] | undefined {
   return res.stdout.replace(/\n$/, "").split("\n");
 }
 
-function kittenIcat(bytes: Uint8Array, box: PreviewBox): string | undefined {
-  // `kitten icat` ships with kitty (and Ghostty users usually have it). It decodes JPEG for us.
-  for (const cmd of [["kitten", "icat"], ["kitty", "+kitten", "icat"]]) {
-    const res = spawnSync(cmd[0]!, [...cmd.slice(1), "--stdin=yes", "--align=left", "--transfer-mode=stream", "--place", `${box.cols}x${box.rows}@0x0`, "--scale-up"], {
-      input: bytes,
-      encoding: "utf8",
-      stdio: ["pipe", "pipe", "ignore"],
-    });
-    if (res.status === 0 && res.stdout) return res.stdout;
+const KITTY_CHUNK = 4096;
+
+/**
+ * kitty graphics protocol (kitty, Ghostty, WezTerm). Requires PNG (f=100).
+ * a=T transmit+display, c/r scale into a cell box, C=1 leaves the cursor
+ * where it was so the caller controls layout. Payload is sent in 4 KiB
+ * chunks; m=1 on every chunk except the last.
+ */
+export function kittySequence(pngBytes: Uint8Array, box: PreviewBox): string {
+  const b64 = Buffer.from(pngBytes).toString("base64");
+  let out = "";
+  for (let i = 0; i < b64.length; i += KITTY_CHUNK) {
+    const chunk = b64.slice(i, i + KITTY_CHUNK);
+    const last = i + KITTY_CHUNK >= b64.length;
+    const ctrl = i === 0 ? `a=T,f=100,c=${box.cols},r=${box.rows},C=1,q=2,m=${last ? 0 : 1}` : `m=${last ? 0 : 1}`;
+    out += `\x1b_G${ctrl};${chunk}\x1b\\`;
   }
-  return undefined;
+  return out;
+}
+
+/** Is `bytes` a PNG? (kitty needs PNG; a provider without PNG variants falls back to chafa.) */
+export function isPng(bytes: Uint8Array): boolean {
+  return bytes.length > 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
+}
+
+/** Build the terminal-native image escape for the detected protocol, or undefined if none applies. */
+export function nativeImageSequence(bytes: Uint8Array, box: PreviewBox, protocol: ImageProtocol, tmux: boolean): string | undefined {
+  let seq: string | undefined;
+  if (protocol === "iterm") seq = itermSequence(bytes, box);
+  else if (protocol === "kitty" && isPng(bytes)) seq = kittySequence(bytes, box);
+  if (!seq) return undefined;
+  return tmux ? tmuxPassthrough(seq) : seq;
 }
 
 export interface RenderInput {
@@ -106,13 +122,9 @@ export function renderBlock({ bytes, avgColor, lines }: RenderInput, opts: Previ
   const tmux = opts.tmux ?? insideTmux();
   const box = { cols: opts.cols, rows: opts.rows };
 
-  if (bytes && protocol === "iterm") {
-    const seq = itermSequence(bytes, box);
-    return blockWithSideText(tmux ? tmuxPassthrough(seq) : seq, box, lines);
-  }
-  if (bytes && protocol === "kitty") {
-    const out = kittenIcat(bytes, box);
-    if (out) return blockStacked(out, lines);
+  if (bytes) {
+    const seq = nativeImageSequence(bytes, box, protocol, tmux);
+    if (seq) return blockWithSideText(seq, box, lines);
   }
   if (bytes && (protocol === "chafa" || protocol === "kitty")) {
     const art = chafaLines(bytes, box);

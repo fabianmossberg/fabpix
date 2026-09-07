@@ -3,7 +3,7 @@ import { parseArgs, str, int, bool } from "./args.ts";
 import { loadConfig } from "./config.ts";
 import { getProvider, parsePhotoRef, providerNames, DEFAULT_PROVIDER } from "./providers/index.ts";
 import { ProviderError, type Orientation } from "./providers/types.ts";
-import { renderPage } from "./commands/list.ts";
+import { listPhotos, type Layout } from "./commands/list.ts";
 import { showPhoto } from "./commands/show.ts";
 import { downloadPhotos } from "./commands/download.ts";
 import { openExternal } from "./commands/open.ts";
@@ -12,7 +12,7 @@ import { clearCache, cacheDir } from "./cache.ts";
 import { bold, dim, red, yellow } from "./render/style.ts";
 import { detectProtocol, insideTmux } from "./render/terminal.ts";
 
-const BOOLEANS = ["json", "preview", "help", "version", "open", "force", "quiet"];
+const BOOLEANS = ["json", "preview", "help", "version", "open", "force", "quiet", "pager"];
 const ALIASES: Record<string, string> = {
   n: "per-page", p: "page", o: "out", s: "size", h: "help", v: "version", q: "quiet", f: "force", P: "provider",
 };
@@ -30,7 +30,7 @@ ${bold("Usage")}
   fabpix cache clear            Remove cached API responses and thumbnails
 
 ${bold("Options")}
-  -n, --per-page <n>     Results per page (default 10, max 80)
+  -n, --per-page <n>     Results per page (default: fills the screen; max 80)
   -p, --page <n>         Page number
       --orientation <o>  landscape | portrait | square
       --color <c>        Colour filter, e.g. red or #ff0000
@@ -40,12 +40,18 @@ ${bold("Options")}
   -f, --force            download: overwrite existing files
       --open             download: open the file afterwards
   -P, --provider <name>  Photo provider (default: ${DEFAULT_PROVIDER}; available: ${providerNames().join(", ")})
+      --layout <l>       grid | list (default: grid when inline images work)
       --rows <n>         Thumbnail height in terminal rows (default 8, show: 20)
       --cols <n>         Thumbnail width in terminal columns (default 24, show: 60)
       --no-preview       Text only, no inline images
+      --no-pager         Print one page and exit instead of waiting for a key
       --json             Machine-readable output
   -h, --help             Show this help
   -v, --version          Show version
+
+${bold("Paging")}
+  In a terminal, results page interactively: space/→ next page, ←/b back,
+  q or esc to stop. The next page is prefetched while you look.
 
 ${bold("Previews")}
   Inline images work in iTerm2, WezTerm, kitty and Ghostty. Other terminals use
@@ -86,7 +92,11 @@ async function main(argv: string[]): Promise<void> {
   const rows = int(flags.rows, config.preview?.rows ?? (isShow ? 20 : 8));
   const cols = int(flags.cols, config.preview?.cols ?? (isShow ? 60 : 24));
   const page = int(flags.page, 1);
-  const perPage = int(flags["per-page"], 10);
+  const perPage = flags["per-page"] !== undefined ? int(flags["per-page"], 10) : undefined;
+  const layout = (str(flags.layout) ?? config.preview?.layout) as Layout | undefined;
+  if (layout !== undefined && layout !== "grid" && layout !== "list") fail(`--layout must be grid or list, got "${layout}".`);
+  const pager = bool(flags.pager, true);
+  const listOpts = { preview, json, rows, cols, layout, perPage, pager };
 
   if (preview && !json && insideTmux() && detectProtocol() === "iterm" && !process.env.FABPIX_QUIET_TMUX) {
     process.stderr.write(yellow("note: ") + dim("inside tmux — previews need `set -g allow-passthrough on` in ~/.tmux.conf") + "\n");
@@ -97,25 +107,26 @@ async function main(argv: string[]): Promise<void> {
       const query = rest.join(" ").trim();
       if (!query) fail("search needs a query.", "example: fabpix search mountain lake");
       const provider = getProvider({ name: providerName, config });
-      const result = await provider.search({
-        query,
-        page,
-        perPage,
-        orientation: str(flags.orientation) as Orientation | undefined,
-        color: str(flags.color),
-        size: str(flags.size),
-        locale: str(flags.locale),
-      });
       const flagsText = [
         flags.orientation ? `--orientation ${flags.orientation}` : "",
         flags.color ? `--color ${flags.color}` : "",
-        perPage !== 10 ? `-n ${perPage}` : "",
+        perPage !== undefined ? `-n ${perPage}` : "",
       ].filter(Boolean).join(" ");
-      await renderPage(result, {
-        preview, json, rows, cols,
-        title: `${provider.name} · "${query}"`,
-        nextCommand: `fabpix search ${JSON.stringify(query)} ${flagsText} -p ${page + 1}`.replace(/\s+/g, " "),
-      });
+      await listPhotos(
+        (p, n) => provider.search({
+          query, page: p, perPage: n,
+          orientation: str(flags.orientation) as Orientation | undefined,
+          color: str(flags.color),
+          size: str(flags.size),
+          locale: str(flags.locale),
+        }),
+        {
+          ...listOpts,
+          startPage: page,
+          title: `${provider.name} · "${query}"`,
+          commandFor: (p) => `fabpix search ${JSON.stringify(query)} ${flagsText} -p ${p}`.replace(/\s+/g, " "),
+        },
+      );
       return;
     }
 
@@ -123,11 +134,11 @@ async function main(argv: string[]): Promise<void> {
     case "popular":
     case "trending": {
       const provider = getProvider({ name: providerName, config });
-      const result = await provider.curated({ page, perPage });
-      await renderPage(result, {
-        preview, json, rows, cols,
+      await listPhotos((p, n) => provider.curated({ page: p, perPage: n }), {
+        ...listOpts,
+        startPage: page,
         title: `${provider.name} · curated`,
-        nextCommand: `fabpix curated${perPage !== 10 ? ` -n ${perPage}` : ""} -p ${page + 1}`,
+        commandFor: (p) => `fabpix curated${perPage !== undefined ? ` -n ${perPage}` : ""} -p ${p}`,
       });
       return;
     }

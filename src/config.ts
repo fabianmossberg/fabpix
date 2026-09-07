@@ -5,7 +5,7 @@ import { join } from "node:path";
 export interface Config {
   defaultProvider?: string;
   providers?: Record<string, { apiKey?: string }>;
-  preview?: { rows?: number; cols?: number };
+  preview?: { rows?: number; cols?: number; layout?: "grid" | "list" };
 }
 
 export function configDir(): string {

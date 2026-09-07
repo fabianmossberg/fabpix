@@ -51,3 +51,7 @@ export function colorEnabled(env: NodeJS.ProcessEnv = process.env, isTTY = proce
 export function terminalColumns(): number {
   return process.stdout.columns || 80;
 }
+
+export function terminalRows(): number {
+  return process.stdout.rows || 24;
+}

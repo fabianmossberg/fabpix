@@ -42,6 +42,11 @@ interface PexelsPage {
 
 const SIZE_NAMES = ["original", "large2x", "large", "medium", "small", "portrait", "landscape", "tiny"] as const;
 
+/** Pexels' image CDN accepts imgix-style params; `fm=png` re-encodes on the fly. */
+function withFormat(url: string, fm: string): string {
+  return url + (url.includes("?") ? "&" : "?") + "fm=" + fm;
+}
+
 function toPhoto(p: PexelsPhoto): Photo {
   return {
     id: String(p.id),
@@ -55,6 +60,8 @@ function toPhoto(p: PexelsPhoto): Photo {
     alt: p.alt || undefined,
     thumbUrl: p.src.tiny,
     previewUrl: p.src.large,
+    thumbPngUrl: withFormat(p.src.tiny, "png"),
+    previewPngUrl: withFormat(p.src.medium, "png"),
     sizes: Object.fromEntries(SIZE_NAMES.map((n) => [n, p.src[n]])),
   };
 }

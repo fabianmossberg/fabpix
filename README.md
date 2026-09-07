@@ -7,6 +7,8 @@ Thumbnails render inline in iTerm2, WezTerm, kitty and Ghostty.
 $ fabpix search "mountain lake" --orientation landscape -n 3
 ```
 
+Results show as a grid of thumbnails that fills your terminal. Press space for the next page, ← to go back, q to stop. The next page is prefetched while you look.
+
 Built for speed: zero runtime dependencies, parallel thumbnail fetches that stream to the screen as they land, and a disk cache so repeat queries finish in ~20 ms.
 
 ## Install
@@ -55,7 +57,7 @@ Common options:
 
 | Flag | Meaning |
 |---|---|
-| `-n, --per-page <n>` | Results per page (default 10, max 80) |
+| `-n, --per-page <n>` | Results per page (default: fills the screen; max 80) |
 | `-p, --page <n>` | Page number |
 | `--orientation <o>` | `landscape`, `portrait` or `square` |
 | `--color <c>` | Colour filter, e.g. `red` or `#ff0000` |
@@ -63,7 +65,9 @@ Common options:
 | `-o, --out <path>` | download: directory or file path |
 | `-f, --force` | download: overwrite existing files |
 | `--open` | download: open the file afterwards |
+| `--layout grid\|list` | Grid (default when images render) or one photo per row with full metadata |
 | `--rows <n>` / `--cols <n>` | Thumbnail box size in terminal cells |
+| `--no-pager` | Print one page and exit instead of waiting for a key |
 | `--no-preview` | Text only |
 | `--json` | Machine-readable output |
 | `-P, --provider <name>` | Photo provider (default `pexels`) |
@@ -85,7 +89,7 @@ Every downloaded file is named `pexels-<id>-<photographer>-<size>.jpg`, so attri
 | Terminal | How |
 |---|---|
 | iTerm2, WezTerm | Native inline images (same protocol as `imgcat`) |
-| kitty, Ghostty | `kitten icat` if available, otherwise `chafa` |
+| kitty, Ghostty | Native kitty graphics protocol (PNG thumbnails) |
 | Anything else | `chafa` ANSI art if installed, otherwise a colour swatch |
 
 Inside **tmux**, add `set -g allow-passthrough on` to `~/.tmux.conf`.
@@ -100,7 +104,7 @@ Previews are skipped automatically when stdout is not a TTY.
 {
   "defaultProvider": "pexels",
   "providers": { "pexels": { "apiKey": "…" } },
-  "preview": { "rows": 8, "cols": 24 }
+  "preview": { "rows": 8, "cols": 24, "layout": "grid" }
 }
 ```
 
