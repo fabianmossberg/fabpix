@@ -1,6 +1,6 @@
 import { createPexels } from "./pexels.ts";
 import { ProviderError, type Provider, type ProviderFactory } from "./types.ts";
-import { loadConfig, resolveApiKey, type Config } from "../config.ts";
+import { loadSettings, resolveApiKey, type Settings } from "../config.ts";
 
 /** Registry of known providers. Add a new provider by adding a line here. */
 export const PROVIDERS: Record<string, ProviderFactory> = {
@@ -15,17 +15,17 @@ export function providerNames(): string[] {
 
 export interface GetProviderOptions {
   name?: string;
-  config?: Config;
+  settings?: Settings;
   ttlMs?: number;
 }
 
-export function getProvider({ name, config = loadConfig(), ttlMs = 10 * 60_000 }: GetProviderOptions = {}): Provider {
-  const resolved = name ?? config.defaultProvider ?? DEFAULT_PROVIDER;
+export function getProvider({ name, settings = loadSettings().settings, ttlMs = 10 * 60_000 }: GetProviderOptions = {}): Provider {
+  const resolved = name ?? settings.provider ?? DEFAULT_PROVIDER;
   const factory = PROVIDERS[resolved];
   if (!factory) {
     throw new ProviderError(`Unknown provider "${resolved}".`, `Available: ${providerNames().join(", ")}`);
   }
-  return factory({ apiKey: resolveApiKey(resolved, config), ttlMs });
+  return factory({ apiKey: resolveApiKey(resolved, settings), ttlMs });
 }
 
 /** Parse "pexels:123" or "123" into { provider, id }. */

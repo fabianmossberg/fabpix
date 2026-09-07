@@ -96,17 +96,48 @@ Inside **tmux**, add `set -g allow-passthrough on` to `~/.tmux.conf`.
 Force a protocol with `FABPIX_PROTOCOL=iterm|kitty|chafa|none`.
 Previews are skipped automatically when stdout is not a TTY.
 
-## Configuration
+## Settings
 
-`~/.config/fabpix/config.json` (respects `XDG_CONFIG_HOME`):
+fabpix reads settings from two places, like git:
+
+| Scope | Where |
+|---|---|
+| Global | `~/.config/fabpix/config.json` (respects `XDG_CONFIG_HOME`), or `~/.fabpixrc` |
+| Project | The nearest `.fabpixrc`, `.fabpixrc.json`, `fabpix.json`, or a `"fabpix"` key in `package.json`, searched upward from the current folder |
+
+Project settings override global ones key by key. Command-line flags override both.
+A relative `download.dir` resolves against the folder that holds the settings file, so it works from anywhere inside the project.
+
+```sh
+fabpix config init                      # write a starter .fabpixrc in the current folder
+fabpix config init --global             # …or the global file
+fabpix config set download.dir ./assets/photos --local
+fabpix config set preview.layout list   # global by default
+fabpix config get download.dir
+fabpix config                           # effective settings and which files were read
+fabpix config paths                     # which files are consulted
+```
+
+All keys, every one optional:
 
 ```json
 {
-  "defaultProvider": "pexels",
+  "provider": "pexels",
   "providers": { "pexels": { "apiKey": "…" } },
-  "preview": { "rows": 8, "cols": 24, "layout": "grid" }
+  "preview": {
+    "enabled": true,
+    "layout": "grid",
+    "protocol": "iterm",
+    "rows": 8, "cols": 24,
+    "showRows": 20, "showCols": 60
+  },
+  "search": { "perPage": 20, "orientation": "landscape", "size": "large", "locale": "sv-SE", "color": "blue" },
+  "download": { "dir": "./assets/photos", "size": "large2x", "overwrite": false },
+  "pager": true
 }
 ```
+
+Keep API keys in the global file (`fabpix auth set <key>`), not in a project file you might commit. Environment variables `FABPIX_PEXELS_KEY` / `PEXELS_API_KEY` and `FABPIX_PROTOCOL` beat both files.
 
 Cache lives in `~/.cache/fabpix` (respects `XDG_CACHE_HOME`). API responses are cached for 10 minutes, thumbnails indefinitely.
 
