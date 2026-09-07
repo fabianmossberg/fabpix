@@ -1,1 +1,13 @@
-# lets ignore stuff...
+# secrets
+.env
+.env.*
+
+# dependencies / build output
+node_modules/
+dist/
+bin/
+
+# os / editor
+.DS_Store
+*.log
+*.bun-build
