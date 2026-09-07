@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/fabianmossberg/fabpix/compare/v0.1.0...v0.1.1) (2026-09-07)
+
+
+### Bug Fixes
+
+* publish to npm as @fabianmossberg/fabpix ([ed04c4b](https://github.com/fabianmossberg/fabpix/commit/ed04c4b9d98908e4e1699a6a4babb36b3002804f))
+
 ## 0.1.0 (2026-09-07)
 
 
