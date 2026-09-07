@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/fabianmossberg/fabpix/compare/v0.1.1...v0.2.0) (2026-09-07)
+
+
+### Features
+
+* Unsplash provider ([#4](https://github.com/fabianmossberg/fabpix/issues/4)) ([580ab45](https://github.com/fabianmossberg/fabpix/commit/580ab45becb8da207389a0b3092dd0052b866f6a))
+
 ## [0.1.1](https://github.com/fabianmossberg/fabpix/compare/v0.1.0...v0.1.1) (2026-09-07)
 
 
