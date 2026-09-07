@@ -18,6 +18,8 @@ export interface ListOptions {
   /** Explicit page size; when undefined the page is sized to fill the terminal. */
   perPage?: number;
   pager: boolean;
+  /** Show ids as provider:id (used when several providers are listed together). */
+  prefixIds?: boolean;
   startPage: number;
   /** Shown above the results, e.g. `pexels · "cats"`. */
   title: string;
@@ -63,11 +65,12 @@ function loadThumbs(page: PhotoPage, protocol: ImageProtocol): Promise<Uint8Arra
   );
 }
 
-function caption(p: Photo, index: number, width: number): string[] {
+function caption(p: Photo, index: number, width: number, prefix: boolean): string[] {
   const num = `#${index + 1} `;
+  const id = prefix ? `${p.provider}:${p.id}` : p.id;
   return [
     dim(num) + bold(truncateWidth(p.photographer, Math.max(4, width - num.length))),
-    dim("id ") + cyan(truncateWidth(p.id, Math.max(4, width - 3))),
+    dim("id ") + cyan(truncateWidth(id, Math.max(4, width - 3))),
   ];
 }
 
@@ -82,7 +85,7 @@ async function paintGrid(loaded: LoadedPage, opts: ListOptions, protocol: ImageP
     for (let i = start; i < Math.min(start + perRow, photos.length); i++) {
       const photo = photos[i]!;
       const bytes = await loaded.thumbs[i];
-      const tile: GridTile = { caption: caption(photo, i, opts.cols) };
+      const tile: GridTile = { caption: caption(photo, i, opts.cols, opts.prefixIds ?? false) };
       if (bytes) {
         tile.imageSeq = nativeImageSequence(bytes, gridOpts, protocol, tmux);
         if (!tile.imageSeq) tile.artLines = chafaLines(bytes, gridOpts);
@@ -99,7 +102,7 @@ async function paintList(loaded: LoadedPage, opts: ListOptions, protocol: ImageP
     const photo = loaded.page.photos[i]!;
     const bytes = await loaded.thumbs[i];
     write(renderBlock(
-      { bytes, avgColor: photo.avgColor, lines: photoLines(photo, i, textWidth) },
+      { bytes, avgColor: photo.avgColor, lines: photoLines(photo, i, textWidth, opts.prefixIds ?? false) },
       { cols: opts.cols, rows: opts.rows, protocol },
     ));
   }

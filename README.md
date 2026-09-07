@@ -24,40 +24,57 @@ npm install -g @fabianmossberg/fabpix
 npx @fabianmossberg/fabpix search cats
 ```
 
-## Setup
+## Setup: API keys
 
-Get a free API key at <https://www.pexels.com/api/>, then either store it:
+fabpix talks to each photo service with your own free API key. Keys are stored in
+`~/.config/fabpix/config.json` (mode 600) by `fabpix auth set`, or read from environment variables.
+Check what's configured and whether the keys work with `fabpix auth status`.
+
+### Pexels (default provider)
+
+1. Sign in or create an account at <https://www.pexels.com>.
+2. Open <https://www.pexels.com/api/> and click **Get Started**, then **Your API Key**.
+   Pexels asks for a short description of what you'll build; "personal CLI for finding photos" is fine.
+3. Copy the key and store it:
 
 ```sh
-fabpix auth set <your-key>        # saved to ~/.config/fabpix/config.json (mode 600)
+fabpix auth set <key>                # or: export PEXELS_API_KEY=<key>
 ```
 
-or export it in your shell:
-
-```sh
-export PEXELS_API_KEY=<your-key>  # FABPIX_PEXELS_KEY also works and takes precedence
-```
-
-Check it with `fabpix auth status`.
+Limits: 200 requests per hour, 20 000 per month. Attribution is appreciated, not required.
 
 ### Unsplash
 
-Create an app at <https://unsplash.com/developers> and copy its **Access Key**:
+Unsplash keys belong to an "application" you register, even if the application is just you.
+
+1. Sign in at <https://unsplash.com/developers> and click **Your apps**, then **New Application**.
+2. Accept the API guidelines checklist (attribution, download tracking, no re-hosting; fabpix does all three).
+3. Name it, e.g. "fabpix", and describe it, e.g. "Terminal CLI for finding photos". The name may not contain "Unsplash".
+4. On the app page, scroll to **Keys** and copy the **Access Key**. The Secret Key is for OAuth login,
+   which fabpix doesn't use, so keep it to yourself.
 
 ```sh
-fabpix auth set <access-key> --provider unsplash   # or export UNSPLASH_ACCESS_KEY=…
-fabpix search cats -P unsplash                     # or put "provider": "unsplash" in .fabpixrc
+fabpix auth set <access-key> --provider unsplash    # or: export UNSPLASH_ACCESS_KEY=<access-key>
 ```
 
-Unsplash's API Guidelines ask a little more of API clients than Pexels does, and fabpix handles it:
-photographer and photo links carry the required `utm_source=fabpix` parameters, every download
-pings Unsplash's download endpoint so the photographer gets credit, and the manifest marks these
-photos as attribution-required so `fabpix credits` flags them. New Unsplash apps are limited to
-50 requests per hour until you apply for production access in their dashboard.
+Limits: 50 requests per hour for a new ("demo") app. Every listing page, `show`, and download counts;
+thumbnails and the image files themselves come from the CDN and do not. fabpix caches API responses
+for ten minutes, so paging back or repeating a search is free. The app page has an **Apply for production**
+button for 5 000 per hour. Attribution is required by Unsplash's API guidelines; fabpix's links carry the
+required parameters and `fabpix credits` flags these photos.
 
-Size names differ between providers. Unsplash's own are `raw`, `full`, `regular`, `small`, `thumb`;
-the Pexels-style names `original`, `large2x`, `large`, `medium` work for both, so one settings file
-can serve both providers.
+### Choosing providers
+
+```sh
+fabpix search cats                     # default provider (pexels, or "provider" in your settings)
+fabpix search cats -P unsplash         # one provider
+fabpix search cats -P all              # every configured provider, results interleaved
+fabpix search cats -P pexels,unsplash  # an explicit set
+```
+
+In settings, `"provider"` accepts a name, a list, or `"all"`. When searching several providers, the
+per-page budget is split evenly, page N is page N of each provider, and ids are shown with their
+provider prefix. If one provider fails (no key, rate limit) you get a warning and the others' results.
 
 ## Usage
 
@@ -80,7 +97,7 @@ Common options:
 | `-p, --page <n>` | Page number |
 | `--orientation <o>` | `landscape`, `portrait` or `square` |
 | `--color <c>` | Colour filter, e.g. `red` or `#ff0000` |
-| `--size <s>` | search: minimum size (`large`/`medium`/`small`). download: variant (`original`, `large2x`, `large`, `medium`, `small`, …) |
+| `--size <s>` | search: minimum size (`large`/`medium`/`small`). download: `max` or a provider size name, see Sizes |
 | `-o, --out <path>` | download: directory or file path |
 | `-f, --force` | download: overwrite existing files |
 | `--open` | download: open the file afterwards |
@@ -91,7 +108,7 @@ Common options:
 | `--no-pager` | Print one page and exit instead of waiting for a key |
 | `--no-preview` | Text only |
 | `--json` | Machine-readable output |
-| `-P, --provider <name>` | Photo provider (default `pexels`) |
+| `-P, --provider <name>` | `pexels`, `unsplash`, `all`, or a comma-separated list |
 
 Examples:
 
@@ -103,7 +120,34 @@ fabpix download 1054666 2014422 -o ./assets/ --force
 fabpix search cats --json | jq -r '.photos[].pageUrl'
 ```
 
-Every downloaded file is named `pexels-<id>-<photographer>-<size>.jpg`, so attribution survives.
+Every downloaded file is named `<provider>-<id>-<photographer>-<size>.jpg`, so attribution survives.
+
+### Photo ids
+
+Ids can carry a provider prefix: `pexels:1054666`, `unsplash:KiRlN3jjVNU`. That form is always
+unambiguous and is what listings print when several providers are shown together, and what the
+manifest uses as its key.
+
+A bare id is matched against each provider's id shape: Pexels ids are all digits, Unsplash ids are
+eleven characters of letters, digits, `_` and `-`. If exactly one provider matches, it's used; if
+several match (an eleven-digit number fits both), the default provider wins; if none match, fabpix
+asks for a prefix.
+
+### Sizes
+
+`--size` and the `download.size` setting accept `max`, which means the largest variant the provider
+offers, plus each provider's own size names. The Pexels-style names also work on Unsplash so one
+settings file can serve both.
+
+| Name | Pexels | Unsplash |
+|---|---|---|
+| `max` | `original` | `full` (same pixels as `raw`, as a ~3 MB JPEG; `raw` is the untouched upload, often 20 MB+) |
+| `original` | original upload | `full` |
+| `large2x` | 1880 px wide | 1880 px wide |
+| `large` | 940 px wide | `regular`, 1080 px wide |
+| `medium` | 350 px tall | `small`, 400 px wide |
+| `small` | 130 px tall | `thumb`, 200 px wide |
+| Unsplash-only | | `raw`, `full`, `regular`, `small`, `thumb` |
 
 ## Credits and metadata
 
@@ -169,8 +213,8 @@ All keys, every one optional:
 
 ```json
 {
-  "provider": "pexels",
-  "providers": { "pexels": { "apiKey": "…" } },
+  "provider": "pexels",                       // or ["pexels", "unsplash"], or "all"
+  "providers": { "pexels": { "apiKey": "…" }, "unsplash": { "apiKey": "…" } },
   "preview": {
     "enabled": true,
     "layout": "grid",
@@ -179,7 +223,7 @@ All keys, every one optional:
     "showRows": 20, "showCols": 60
   },
   "search": { "perPage": 20, "orientation": "landscape", "size": "large", "locale": "sv-SE", "color": "blue" },
-  "download": { "dir": "./assets/photos", "size": "large2x", "overwrite": false, "metadata": "manifest" },
+  "download": { "dir": "./assets/photos", "size": "max", "overwrite": false, "metadata": "manifest" },
   "pager": true
 }
 ```
@@ -190,7 +234,7 @@ Cache lives in `~/.cache/fabpix` (respects `XDG_CACHE_HOME`). API responses are 
 
 ## Adding a provider
 
-Providers implement the small `Provider` interface in `src/providers/types.ts` and are registered in `src/providers/index.ts`. Photo ids can be prefixed to target a provider explicitly, e.g. `fabpix show unsplash:abc123`. Pexels is the default; Unsplash is the second one and a good template for adding more.
+Providers implement the small `Provider` interface in `src/providers/types.ts` and are registered in `src/providers/index.ts`. Photo ids can be prefixed to target a provider explicitly, e.g. `fabpix show unsplash:abc123`, and each provider declares an id pattern so bare ids can be resolved. Pexels is the default; Unsplash is the second one and a good template for adding more.
 
 ## Development
 

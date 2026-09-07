@@ -14,8 +14,8 @@ import { dirname, join, resolve, isAbsolute } from "node:path";
  *      or ~/.fabpixrc
  */
 export interface Settings {
-  /** Default provider name, e.g. "pexels". */
-  provider?: string;
+  /** Default provider: a name, a list of names to search together, or "all". */
+  provider?: string | string[];
   providers?: Record<string, { apiKey?: string }>;
   preview?: {
     /** Set false for text-only output. */
@@ -40,7 +40,7 @@ export interface Settings {
   download?: {
     /** Directory for downloads. Relative paths resolve against the config file's folder. */
     dir?: string;
-    /** Size variant, e.g. "large2x" or "original". */
+    /** Size variant: "max" (largest the provider offers), or a provider size name like "large2x". */
     size?: string;
     overwrite?: boolean;
     /** Where to record photographer/license metadata: a fabpix.manifest.json per folder (default), a .json sidecar per image, both, or none. */
@@ -231,6 +231,6 @@ export const TEMPLATE: Settings = {
   provider: "pexels",
   preview: { layout: "grid", rows: 8, cols: 24 },
   search: { perPage: 20 },
-  download: { dir: "./assets/photos", size: "large2x", overwrite: false, metadata: "manifest" },
+  download: { dir: "./assets/photos", size: "max", overwrite: false, metadata: "manifest" },
   pager: true,
 };

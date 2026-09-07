@@ -1,7 +1,7 @@
 import pkg from "../package.json" with { type: "json" };
 import { parseArgs, str, int, bool } from "./args.ts";
 import { loadSettings, type Scope } from "./config.ts";
-import { getProvider, parsePhotoRef, providerNames, DEFAULT_PROVIDER } from "./providers/index.ts";
+import { getProvider, getProviders, resolvePhotoRef, selectProviders, providerNames, DEFAULT_PROVIDER } from "./providers/index.ts";
 import { ProviderError, type Orientation } from "./providers/types.ts";
 import { listPhotos, type Layout } from "./commands/list.ts";
 import { showPhoto } from "./commands/show.ts";
@@ -24,6 +24,7 @@ const HELP = `${bold("fabpix")} ${dim("v" + pkg.version)} — stock photos in yo
 
 ${bold("Usage")}
   fabpix search <query…>        Search photos (previews inline where supported)
+                                -P all (or -P pexels,unsplash) searches several providers at once
   fabpix curated                Browse curated / trending photos
   fabpix show <id>              Larger preview + full metadata for one photo
   fabpix download <id…>         Save photo(s) to disk (+ fabpix.manifest.json with credits)
@@ -45,13 +46,13 @@ ${bold("Options")}
       --orientation <o>  landscape | portrait | square
       --color <c>        Colour filter (pexels: red or #ff0000; unsplash: red, blue, black_and_white, …)
       --size <s>         search: min size (large|medium|small)
-                         download: variant (original|large2x|large|medium|small…)
+                         download: max (largest available) or a provider size name
   -o, --out <path>       download: directory or file path
   -f, --force            download: overwrite existing files
       --open             download: open the file afterwards
       --metadata <m>     download: manifest (default) | sidecar | both | none
       --format <f>       credits: text (default) | markdown | json
-  -P, --provider <name>  Photo provider (default: ${DEFAULT_PROVIDER}; available: ${providerNames().join(", ")})
+  -P, --provider <name>  Photo provider (default: ${DEFAULT_PROVIDER}; available: ${providerNames().join(", ")}, all)
       --layout <l>       grid | list (default: grid when inline images work)
       --rows <n>         Thumbnail height in terminal rows (default 8, show: 20)
       --cols <n>         Thumbnail width in terminal columns (default 24, show: 60)
@@ -60,6 +61,11 @@ ${bold("Options")}
       --json             Machine-readable output
   -h, --help             Show this help
   -v, --version          Show version
+
+${bold("Photo ids")}
+  Ids may carry a provider prefix: pexels:1054666, unsplash:KiRlN3jjVNU. A bare id is matched
+  against each provider's id format (Pexels: digits, Unsplash: 11 characters); if several
+  providers match, the default provider wins.
 
 ${bold("Settings")}
   Global:  ~/.config/fabpix/config.json  (or ~/.fabpixrc)
@@ -83,7 +89,7 @@ ${bold("Examples")}
   fabpix download 1054666 --size large2x -o ~/Pictures
   fabpix search cats --json | jq '.photos[].pageUrl'
   fabpix search cats -P unsplash            # or set "provider": "unsplash" in .fabpixrc
-  fabpix show unsplash:Zx8RdG0h_Yk           # ids can carry a provider prefix
+  fabpix show unsplash:KiRlN3jjVNU           # ids can carry a provider prefix
 `;
 
 function fail(message: string, hint?: string): never {
@@ -107,7 +113,9 @@ async function main(argv: string[]): Promise<void> {
 
   const { settings } = loadSettings();
   if (settings.preview?.protocol && !process.env.FABPIX_PROTOCOL) process.env.FABPIX_PROTOCOL = settings.preview.protocol;
-  const providerName = str(flags.provider) ?? settings.provider ?? DEFAULT_PROVIDER;
+  const providerNamesSelected = selectProviders(str(flags.provider) ?? settings.provider);
+  const providerName = providerNamesSelected[0]!; // for single-provider commands (auth, config)
+  const multi = providerNamesSelected.length > 1;
   const preview = bool(flags.preview, settings.preview?.enabled ?? true);
   const json = bool(flags.json, false);
   const isShow = command === "show";
@@ -129,8 +137,9 @@ async function main(argv: string[]): Promise<void> {
     case "search": {
       const query = rest.join(" ").trim();
       if (!query) fail("search needs a query.", "example: fabpix search mountain lake");
-      const provider = getProvider({ name: providerName, settings });
+      const provider = getProviders(providerNamesSelected, settings);
       const flagsText = [
+        flags.provider ? `-P ${flags.provider}` : "",
         flags.orientation ? `--orientation ${flags.orientation}` : "",
         flags.color ? `--color ${flags.color}` : "",
         perPage !== undefined ? `-n ${perPage}` : "",
@@ -145,6 +154,7 @@ async function main(argv: string[]): Promise<void> {
         }),
         {
           ...listOpts,
+          prefixIds: multi,
           startPage: page,
           title: `${provider.name} · "${query}"`,
           commandFor: (p) => `fabpix search ${JSON.stringify(query)} ${flagsText} -p ${p}`.replace(/\s+/g, " "),
@@ -156,12 +166,13 @@ async function main(argv: string[]): Promise<void> {
     case "curated":
     case "popular":
     case "trending": {
-      const provider = getProvider({ name: providerName, settings });
+      const provider = getProviders(providerNamesSelected, settings);
       await listPhotos((p, n) => provider.curated({ page: p, perPage: n }), {
         ...listOpts,
+        prefixIds: multi,
         startPage: page,
         title: `${provider.name} · curated`,
-        commandFor: (p) => `fabpix curated${perPage !== undefined ? ` -n ${perPage}` : ""} -p ${p}`,
+        commandFor: (p) => `fabpix curated${flags.provider ? ` -P ${flags.provider}` : ""}${perPage !== undefined ? ` -n ${perPage}` : ""} -p ${p}`,
       });
       return;
     }
@@ -170,7 +181,7 @@ async function main(argv: string[]): Promise<void> {
     case "info": {
       const ref = rest[0];
       if (!ref) fail("show needs a photo id.", "example: fabpix show 1054666");
-      const { provider: pName, id } = parsePhotoRef(ref, providerName);
+      const { provider: pName, id } = resolvePhotoRef(ref, providerNamesSelected);
       await showPhoto(getProvider({ name: pName, settings }), { id, preview, json, rows, cols });
       return;
     }
@@ -184,7 +195,7 @@ async function main(argv: string[]): Promise<void> {
       // Group ids by provider so "pexels:1 unsplash:2" both work in one call.
       const groups = new Map<string, string[]>();
       for (const ref of rest) {
-        const { provider: pName, id } = parsePhotoRef(ref, providerName);
+        const { provider: pName, id } = resolvePhotoRef(ref, providerNamesSelected);
         groups.set(pName, [...(groups.get(pName) ?? []), id]);
       }
       const files: string[] = [];
@@ -216,7 +227,7 @@ async function main(argv: string[]): Promise<void> {
     case "open": {
       const ref = rest[0];
       if (!ref) fail("open needs a photo id.");
-      const { provider: pName, id } = parsePhotoRef(ref, providerName);
+      const { provider: pName, id } = resolvePhotoRef(ref, providerNamesSelected);
       const photo = await getProvider({ name: pName, settings }).get(id);
       openExternal(photo.pageUrl);
       process.stdout.write(dim("opened ") + photo.pageUrl + "\n");
@@ -232,7 +243,8 @@ async function main(argv: string[]): Promise<void> {
         return;
       }
       if (sub === "status" || sub === undefined) {
-        await authStatus(providerName);
+        const names = flags.provider ? providerNamesSelected : providerNames();
+        for (const n of names) await authStatus(n);
         return;
       }
       fail(`unknown auth subcommand "${sub}".`, "use: fabpix auth set <key> | fabpix auth status");

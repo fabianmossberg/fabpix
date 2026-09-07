@@ -119,6 +119,7 @@ export function createPexels(ctx: ProviderContext): Provider {
     name: "pexels",
     sizeNames: SIZE_NAMES,
     defaultSize: "original",
+    maxSize: "original",
 
     async search(opts: SearchOptions): Promise<PhotoPage> {
       const res = await request<PexelsPage>("/search", {

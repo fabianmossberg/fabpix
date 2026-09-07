@@ -67,6 +67,8 @@ export interface Provider {
   /** Ordered list of download size names, largest first. */
   readonly sizeNames: readonly string[];
   readonly defaultSize: string;
+  /** What the provider-independent size name "max" resolves to. */
+  readonly maxSize: string;
   search(opts: SearchOptions): Promise<PhotoPage>;
   curated(opts: ListOptions): Promise<PhotoPage>;
   get(id: string): Promise<Photo>;

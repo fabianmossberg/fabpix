@@ -128,6 +128,8 @@ export function createUnsplash(ctx: ProviderContext): Provider {
     name: "unsplash",
     sizeNames: SIZE_NAMES,
     defaultSize: "full",
+    // `raw` is the untouched upload (often 20 MB+); `full` has the same pixels as a ~3 MB JPEG.
+    maxSize: "full",
 
     async search(opts: SearchOptions): Promise<PhotoPage> {
       const perPage = Math.min(opts.perPage ?? 10, 30);
