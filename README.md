@@ -17,11 +17,11 @@ Built for speed: zero runtime dependencies, parallel thumbnail fetches that stre
 # Homebrew (prebuilt binary, fastest startup)
 brew install fabianmossberg/tap/fabpix
 
-# npm (runs on Node ≥ 20)
-npm install -g fabpix
+# npm (runs on Node ≥ 20) — the command is still `fabpix`
+npm install -g @fabianmossberg/fabpix
 
 # or try it without installing
-npx fabpix search cats
+npx @fabianmossberg/fabpix search cats
 ```
 
 ## Setup

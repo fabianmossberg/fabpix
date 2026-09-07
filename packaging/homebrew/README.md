@@ -14,4 +14,4 @@ release-please keeps a "chore(main): release X.Y.Z" pull request open; merging i
 release, builds binaries, publishes to npm and updates the tap. Pre-1.0, `feat:` bumps the
 minor version and `fix:` the patch.
 
-Users install with `brew install fabianmossberg/tap/fabpix` or `npm i -g fabpix`.
+Users install with `brew install fabianmossberg/tap/fabpix` or `npm i -g @fabianmossberg/fabpix`.
