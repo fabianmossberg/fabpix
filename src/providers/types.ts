@@ -1,3 +1,10 @@
+export interface License {
+  name: string;
+  url: string;
+  /** Whether the provider's terms require visible attribution when the photo is used. */
+  attributionRequired: boolean;
+}
+
 /** Provider-neutral photo model. Every provider maps its API shape onto this. */
 export interface Photo {
   /** Provider-local id, e.g. "12345678". */
@@ -21,6 +28,7 @@ export interface Photo {
   previewPngUrl?: string;
   /** Named download sizes, e.g. { original, large2x, large, medium, small }. */
   sizes: Record<string, string>;
+  license: License;
 }
 
 export interface PhotoPage {

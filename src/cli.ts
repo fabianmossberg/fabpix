@@ -9,6 +9,8 @@ import { downloadPhotos } from "./commands/download.ts";
 import { openExternal } from "./commands/open.ts";
 import { authSet, authStatus } from "./commands/auth.ts";
 import { configGet, configInit, configPaths, configSet, configShow } from "./commands/config.ts";
+import { credits, CREDITS_FORMATS, type CreditsFormat } from "./commands/credits.ts";
+import { METADATA_MODES, type MetadataMode } from "./manifest.ts";
 import { clearCache, cacheDir } from "./cache.ts";
 import { bold, dim, red, yellow } from "./render/style.ts";
 import { detectProtocol, insideTmux } from "./render/terminal.ts";
@@ -24,7 +26,8 @@ ${bold("Usage")}
   fabpix search <query…>        Search photos (previews inline where supported)
   fabpix curated                Browse curated / trending photos
   fabpix show <id>              Larger preview + full metadata for one photo
-  fabpix download <id…>         Save photo(s) to disk
+  fabpix download <id…>         Save photo(s) to disk (+ fabpix.manifest.json with credits)
+  fabpix credits [dir]          Attribution list from a folder's manifest (--format text|markdown|json)
   fabpix open <id>              Open the photo's web page in your browser
   fabpix auth set <key>         Store an API key   (or export PEXELS_API_KEY)
   fabpix auth status            Check which key is in use and whether it works
@@ -45,6 +48,8 @@ ${bold("Options")}
   -o, --out <path>       download: directory or file path
   -f, --force            download: overwrite existing files
       --open             download: open the file afterwards
+      --metadata <m>     download: manifest (default) | sidecar | both | none
+      --format <f>       credits: text (default) | markdown | json
   -P, --provider <name>  Photo provider (default: ${DEFAULT_PROVIDER}; available: ${providerNames().join(", ")})
       --layout <l>       grid | list (default: grid when inline images work)
       --rows <n>         Thumbnail height in terminal rows (default 8, show: 20)
@@ -60,7 +65,7 @@ ${bold("Settings")}
   Project: nearest .fabpixrc / .fabpixrc.json / fabpix.json / package.json "fabpix" key,
            searched upward from the current folder. Project overrides global, flags override both.
   Keys: provider, preview.{enabled,layout,protocol,rows,cols}, search.{perPage,orientation,size,locale},
-        download.{dir,size,overwrite}, pager. A relative download.dir is resolved from the file's folder.
+        download.{dir,size,overwrite,metadata}, pager. A relative download.dir is resolved from the file's folder.
 
 ${bold("Paging")}
   In a terminal, results page interactively: space/→ next page, ←/b back,
@@ -171,6 +176,8 @@ async function main(argv: string[]): Promise<void> {
     case "dl":
     case "get": {
       if (rest.length === 0) fail("download needs at least one photo id.", "example: fabpix download 1054666 --size large2x");
+      const metadata = (str(flags.metadata) ?? settings.download?.metadata ?? "manifest") as MetadataMode;
+      if (!METADATA_MODES.includes(metadata)) fail(`--metadata must be one of ${METADATA_MODES.join(", ")}, got "${metadata}".`);
       // Group ids by provider so "pexels:1 unsplash:2" both work in one call.
       const groups = new Map<string, string[]>();
       for (const ref of rest) {
@@ -186,11 +193,20 @@ async function main(argv: string[]): Promise<void> {
             out: str(flags.out) ?? settings.download?.dir,
             force: bool(flags.force, settings.download?.overwrite ?? false),
             quiet: bool(flags.quiet, false) || json,
+            metadata,
           })),
         );
       }
       if (json) process.stdout.write(JSON.stringify({ files }, null, 2) + "\n");
       if (bool(flags.open, false)) for (const f of files) openExternal(f);
+      return;
+    }
+
+    case "credits":
+    case "attribution": {
+      const format = (str(flags.format) ?? (json ? "json" : "text")) as CreditsFormat;
+      if (!CREDITS_FORMATS.includes(format)) fail(`--format must be one of ${CREDITS_FORMATS.join(", ")}, got "${format}".`);
+      credits(rest[0] ?? settings.download?.dir, format);
       return;
     }
 

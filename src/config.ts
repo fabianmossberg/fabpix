@@ -43,6 +43,8 @@ export interface Settings {
     /** Size variant, e.g. "large2x" or "original". */
     size?: string;
     overwrite?: boolean;
+    /** Where to record photographer/license metadata: a fabpix.manifest.json per folder (default), a .json sidecar per image, both, or none. */
+    metadata?: "manifest" | "sidecar" | "both" | "none";
   };
   /** Interactive paging in a terminal. */
   pager?: boolean;
@@ -226,6 +228,6 @@ export const TEMPLATE: Settings = {
   provider: "pexels",
   preview: { layout: "grid", rows: 8, cols: 24 },
   search: { perPage: 20 },
-  download: { dir: "./assets/photos", size: "large2x", overwrite: false },
+  download: { dir: "./assets/photos", size: "large2x", overwrite: false, metadata: "manifest" },
   pager: true,
 };

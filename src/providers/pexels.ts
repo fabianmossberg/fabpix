@@ -40,6 +40,12 @@ interface PexelsPage {
   next_page?: string;
 }
 
+const LICENSE = {
+  name: "Pexels License",
+  url: "https://www.pexels.com/license/",
+  attributionRequired: false, // appreciated, not required: https://www.pexels.com/license/
+} as const;
+
 const SIZE_NAMES = ["original", "large2x", "large", "medium", "small", "portrait", "landscape", "tiny"] as const;
 
 /** Pexels' image CDN accepts imgix-style params; `fm=png` re-encodes on the fly. */
@@ -63,6 +69,7 @@ function toPhoto(p: PexelsPhoto): Photo {
     thumbPngUrl: withFormat(p.src.tiny, "png"),
     previewPngUrl: withFormat(p.src.medium, "png"),
     sizes: Object.fromEntries(SIZE_NAMES.map((n) => [n, p.src[n]])),
+    license: LICENSE,
   };
 }
 

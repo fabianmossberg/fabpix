@@ -65,6 +65,8 @@ Common options:
 | `-o, --out <path>` | download: directory or file path |
 | `-f, --force` | download: overwrite existing files |
 | `--open` | download: open the file afterwards |
+| `--metadata <m>` | download: `manifest` (default), `sidecar`, `both`, `none` |
+| `--format <f>` | credits: `text` (default), `markdown`, `json` |
 | `--layout grid\|list` | Grid (default when images render) or one photo per row with full metadata |
 | `--rows <n>` / `--cols <n>` | Thumbnail box size in terminal cells |
 | `--no-pager` | Print one page and exit instead of waiting for a key |
@@ -83,6 +85,32 @@ fabpix search cats --json | jq -r '.photos[].pageUrl'
 ```
 
 Every downloaded file is named `pexels-<id>-<photographer>-<size>.jpg`, so attribution survives.
+
+## Credits and metadata
+
+Downloaded images carry no photographer information inside the file (Pexels originals have only a
+minimal EXIF block), so fabpix records it for you. By default each download folder gets a
+`fabpix.manifest.json` with the full record for every photo: photographer and profile link, page URL,
+alt text, dimensions, average colour, license, and which files were downloaded at which size.
+Paths in the manifest are relative to the folder, so it is safe to commit.
+
+```sh
+fabpix credits ./assets/photos               # attribution list, grouped by photographer
+fabpix credits ./assets/photos --format markdown >> CREDITS.md
+fabpix credits --json | jq '.photos[] | {photographer, files}'
+```
+
+Control what gets written with `--metadata` or the `download.metadata` setting:
+
+| Mode | Writes |
+|---|---|
+| `manifest` (default) | One `fabpix.manifest.json` per folder |
+| `sidecar` | One `<image>.json` next to each image |
+| `both` | Both of the above |
+| `none` | Just the image |
+
+The manifest is the contract for build-time tooling: a Vite or Svelte plugin can import it to resolve
+`provider:id` to a local file and its credit line, or render a thank-you page from `photos`.
 
 ## Terminal previews
 
@@ -132,7 +160,7 @@ All keys, every one optional:
     "showRows": 20, "showCols": 60
   },
   "search": { "perPage": 20, "orientation": "landscape", "size": "large", "locale": "sv-SE", "color": "blue" },
-  "download": { "dir": "./assets/photos", "size": "large2x", "overwrite": false },
+  "download": { "dir": "./assets/photos", "size": "large2x", "overwrite": false, "metadata": "manifest" },
   "pager": true
 }
 ```
