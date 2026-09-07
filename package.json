@@ -1,6 +1,6 @@
 {
   "name": "fabpix",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Search, preview and download stock photos from Pexels (and more) right in your terminal",
   "license": "MIT",
   "author": "Fabian Mossberg",
@@ -10,12 +10,24 @@
   },
   "homepage": "https://github.com/fabianmossberg/fabpix#readme",
   "bugs": "https://github.com/fabianmossberg/fabpix/issues",
-  "keywords": ["pexels", "stock-photos", "cli", "terminal", "imgcat", "iterm2", "kitty"],
+  "keywords": [
+    "pexels",
+    "stock-photos",
+    "cli",
+    "terminal",
+    "imgcat",
+    "iterm2",
+    "kitty"
+  ],
   "type": "module",
   "bin": {
     "fabpix": "dist/fabpix.js"
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "engines": {
     "node": ">=20"
   },
