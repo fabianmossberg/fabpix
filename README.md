@@ -1,6 +1,6 @@
 # fabpix
 
-Search, preview and download stock photos from [Pexels](https://www.pexels.com) without leaving your terminal.
+Search, preview and download stock photos from [Pexels](https://www.pexels.com) and [Unsplash](https://unsplash.com) without leaving your terminal.
 Thumbnails render inline in iTerm2, WezTerm, kitty and Ghostty.
 
 ```
@@ -39,6 +39,25 @@ export PEXELS_API_KEY=<your-key>  # FABPIX_PEXELS_KEY also works and takes prece
 ```
 
 Check it with `fabpix auth status`.
+
+### Unsplash
+
+Create an app at <https://unsplash.com/developers> and copy its **Access Key**:
+
+```sh
+fabpix auth set <access-key> --provider unsplash   # or export UNSPLASH_ACCESS_KEY=…
+fabpix search cats -P unsplash                     # or put "provider": "unsplash" in .fabpixrc
+```
+
+Unsplash's API Guidelines ask a little more of API clients than Pexels does, and fabpix handles it:
+photographer and photo links carry the required `utm_source=fabpix` parameters, every download
+pings Unsplash's download endpoint so the photographer gets credit, and the manifest marks these
+photos as attribution-required so `fabpix credits` flags them. New Unsplash apps are limited to
+50 requests per hour until you apply for production access in their dashboard.
+
+Size names differ between providers. Unsplash's own are `raw`, `full`, `regular`, `small`, `thumb`;
+the Pexels-style names `original`, `large2x`, `large`, `medium` work for both, so one settings file
+can serve both providers.
 
 ## Usage
 
@@ -171,7 +190,7 @@ Cache lives in `~/.cache/fabpix` (respects `XDG_CACHE_HOME`). API responses are 
 
 ## Adding a provider
 
-Providers implement the small `Provider` interface in `src/providers/types.ts` and are registered in `src/providers/index.ts`. Photo ids can be prefixed to target a provider explicitly, e.g. `fabpix show unsplash:abc123`. Pexels is the default and currently the only one.
+Providers implement the small `Provider` interface in `src/providers/types.ts` and are registered in `src/providers/index.ts`. Photo ids can be prefixed to target a provider explicitly, e.g. `fabpix show unsplash:abc123`. Pexels is the default; Unsplash is the second one and a good template for adding more.
 
 ## Development
 

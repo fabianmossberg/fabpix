@@ -21,12 +21,14 @@ export async function authStatus(providerName: string): Promise<void> {
   const source =
     process.env[`FABPIX_${providerName.toUpperCase()}_KEY`] ? "env FABPIX_" + providerName.toUpperCase() + "_KEY"
     : process.env[`${providerName.toUpperCase()}_API_KEY`] ? "env " + providerName.toUpperCase() + "_API_KEY"
+    : process.env[`${providerName.toUpperCase()}_ACCESS_KEY`] ? "env " + providerName.toUpperCase() + "_ACCESS_KEY"
     : settings.providers?.[providerName]?.apiKey ? (sources.map((s) => s.path).join(" / ") || "settings")
     : undefined;
 
   process.stdout.write(bold(providerName) + "\n");
   if (!key) {
-    process.stdout.write(red("  no API key configured") + "\n" + dim("  run: fabpix auth set <key>") + "\n");
+    const flag = providerName === "pexels" ? "" : ` --provider ${providerName}`;
+    process.stdout.write(red("  no API key configured") + "\n" + dim(`  run: fabpix auth set <key>${flag}`) + "\n");
     process.exitCode = 1;
     return;
   }

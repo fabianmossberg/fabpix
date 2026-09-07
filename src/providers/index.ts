@@ -1,10 +1,12 @@
 import { createPexels } from "./pexels.ts";
+import { createUnsplash } from "./unsplash.ts";
 import { ProviderError, type Provider, type ProviderFactory } from "./types.ts";
 import { loadSettings, resolveApiKey, type Settings } from "../config.ts";
 
 /** Registry of known providers. Add a new provider by adding a line here. */
 export const PROVIDERS: Record<string, ProviderFactory> = {
   pexels: createPexels,
+  unsplash: createUnsplash,
 };
 
 export const DEFAULT_PROVIDER = "pexels";

@@ -61,6 +61,11 @@ export async function downloadPhotos(provider: Provider, opts: DownloadOptions):
     }),
   );
 
+  // Providers like Unsplash require a "download happened" ping per photo. Best effort, never blocks.
+  if (provider.trackDownload) {
+    await Promise.all(saved.filter((s) => s.fresh).map((s) => provider.trackDownload!(s.photo).catch(() => undefined)));
+  }
+
   recordMetadata(saved, opts);
   return saved.map((s) => s.file);
 }

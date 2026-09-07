@@ -3,6 +3,9 @@ export interface License {
   url: string;
   /** Whether the provider's terms require visible attribution when the photo is used. */
   attributionRequired: boolean;
+  /** Display name and home link for "Photo by X on <Provider>" credit lines. */
+  providerName?: string;
+  providerUrl?: string;
 }
 
 /** Provider-neutral photo model. Every provider maps its API shape onto this. */
@@ -29,6 +32,8 @@ export interface Photo {
   /** Named download sizes, e.g. { original, large2x, large, medium, small }. */
   sizes: Record<string, string>;
   license: License;
+  /** Provider endpoint to call when the photo is downloaded (Unsplash requires this). */
+  trackingUrl?: string;
 }
 
 export interface PhotoPage {
@@ -65,6 +70,8 @@ export interface Provider {
   search(opts: SearchOptions): Promise<PhotoPage>;
   curated(opts: ListOptions): Promise<PhotoPage>;
   get(id: string): Promise<Photo>;
+  /** Called once per freshly downloaded photo; best effort, errors are ignored. */
+  trackDownload?(photo: Photo): Promise<void>;
 }
 
 export interface ProviderContext {

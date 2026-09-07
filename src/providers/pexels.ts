@@ -44,6 +44,8 @@ const LICENSE = {
   name: "Pexels License",
   url: "https://www.pexels.com/license/",
   attributionRequired: false, // appreciated, not required: https://www.pexels.com/license/
+  providerName: "Pexels",
+  providerUrl: "https://www.pexels.com",
 } as const;
 
 const SIZE_NAMES = ["original", "large2x", "large", "medium", "small", "portrait", "landscape", "tiny"] as const;
