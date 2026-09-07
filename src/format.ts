@@ -42,10 +42,10 @@ export function truncate(s: string, max: number): string {
 }
 
 /** Metadata lines shown next to a thumbnail in list views. */
-export function photoLines(p: Photo, index: number | undefined, maxWidth: number): string[] {
+export function photoLines(p: Photo, index: number | undefined, maxWidth: number, prefixId = false): string[] {
   const head = (index !== undefined ? dim(`#${index + 1} `) : "") + bold(truncate(p.photographer, maxWidth - 4));
   const geometry = `${p.width} × ${p.height} · ${orientationOf(p)}` + (p.avgColor ? ` · ${p.avgColor}` : "");
-  const id = `id ${cyan(p.provider === "pexels" ? p.id : `${p.provider}:${p.id}`)}`;
+  const id = `id ${cyan(prefixId ? `${p.provider}:${p.id}` : p.id)}`;
   const lines = [head, dim(geometry), id, dim(link(p.pageUrl, truncate(p.pageUrl, maxWidth)))];
   if (p.alt) lines.push(dim(truncate(p.alt, maxWidth)));
   return lines;

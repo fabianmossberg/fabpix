@@ -28,9 +28,10 @@ interface Saved {
 }
 
 export async function downloadPhotos(provider: Provider, opts: DownloadOptions): Promise<string[]> {
-  const size = opts.size ?? provider.defaultSize;
+  const requested = opts.size ?? provider.defaultSize;
+  const size = requested === "max" ? provider.maxSize : requested;
   if (!provider.sizeNames.includes(size)) {
-    throw new ProviderError(`Unknown size "${size}" for ${provider.name}.`, `Available: ${provider.sizeNames.join(", ")}`);
+    throw new ProviderError(`Unknown size "${requested}" for ${provider.name}.`, `Available: max, ${provider.sizeNames.join(", ")}`);
   }
 
   const out = opts.out ? resolve(opts.out) : process.cwd();

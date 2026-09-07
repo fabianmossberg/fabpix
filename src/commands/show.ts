@@ -31,9 +31,9 @@ export async function showPhoto(provider: Provider, opts: ShowOptions): Promise<
     dim(link(photo.pageUrl)),
     ...(photo.alt ? ["", photo.alt.slice(0, width)] : []),
     "",
-    dim("sizes: ") + Object.keys(photo.sizes).join(dim(" · ")),
+    dim("sizes: ") + ["max"].concat(Object.keys(photo.sizes)).join(dim(" · ")),
     "",
-    dim(`download:  fabpix download ${photo.id} --size large2x`),
+    dim(`download:  fabpix download ${photo.provider}:${photo.id} --size max`),
   ];
   process.stdout.write(
     renderBlock({ bytes, avgColor: photo.avgColor, lines }, { cols: opts.cols, rows: opts.rows, protocol }),
