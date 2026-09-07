@@ -184,7 +184,7 @@ bun run build                  # dist/fabpix.js  — the npm package (Node targe
 bun run compile                # bin/fabpix      — single native binary
 ```
 
-Releases are cut by pushing a `v*` tag; GitHub Actions builds binaries for macOS/Linux, publishes to npm and updates the Homebrew tap.
+Releases are automatic: release-please turns conventional commits on master into a release PR; merging it tags the version, builds binaries for macOS/Linux, publishes to npm and updates the Homebrew tap.
 
 ## License
 

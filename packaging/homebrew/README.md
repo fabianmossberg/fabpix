@@ -1,10 +1,17 @@
-# Homebrew tap setup (one-time)
+# Release setup (one-time)
 
-1. Create a public GitHub repo named `homebrew-tap` under your account.
-2. Create a fine-grained personal access token with **Contents: read/write** on that repo only.
-3. Add it to this repo's Actions secrets as `TAP_GITHUB_TOKEN`.
-4. Add your npm automation token as `NPM_TOKEN`.
-5. Bump `version` in `package.json`, commit, then `git tag v0.1.0 && git push --tags`.
+1. The tap repo `fabianmossberg/homebrew-tap` exists (public).
+2. Create a fine-grained GitHub token with **Contents: read/write** on `homebrew-tap` only,
+   and add it to this repo: `gh secret set TAP_GITHUB_TOKEN`.
+3. Create an npm granular access token with publish rights (bypass 2FA) and add it:
+   `gh secret set NPM_TOKEN`. After the first publish you can switch to npm trusted
+   publishing and delete the token.
 
-The release workflow builds binaries, creates the GitHub release, publishes to npm, and pushes a rendered `Formula/fabpix.rb` to the tap.
-Users then install with `brew install fabianmossberg/tap/fabpix`.
+# Releasing (every time)
+
+Nothing to do by hand. Merge conventional commits into master (`feat:`, `fix:`, `feat!:`).
+release-please keeps a "chore(main): release X.Y.Z" pull request open; merging it tags the
+release, builds binaries, publishes to npm and updates the tap. Pre-1.0, `feat:` bumps the
+minor version and `fix:` the patch.
+
+Users install with `brew install fabianmossberg/tap/fabpix` or `npm i -g fabpix`.

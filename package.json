@@ -1,6 +1,6 @@
 {
   "name": "fabpix",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "Search, preview and download stock photos from Pexels (and more) right in your terminal",
   "license": "MIT",
   "author": "Fabian Mossberg",
