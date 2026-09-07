@@ -65,8 +65,8 @@ describe("credits", () => {
 
   test("markdown output links photographer, photos and license", () => {
     const md = formatCredits(groupCredits(entries), entries, "markdown");
-    expect(md).toContain("- [Ada Lovelace](https://p/@ada) via Pexels ([photo 1](https://p/1), [photo 2](https://p/3))");
-    expect(md).toContain("- Zed via Pexels ([photo](https://p/1))");
+    expect(md).toContain("- [Ada Lovelace](https://p/@ada) on Pexels ([photo 1](https://p/1), [photo 2](https://p/3))");
+    expect(md).toContain("- Zed on Pexels ([photo](https://p/1))");
     expect(md).toContain("_Pexels: [Pexels License](https://www.pexels.com/license/)_");
   });
 

@@ -29,7 +29,9 @@ export function groupCredits(entries: ManifestEntry[]): Credit[] {
   return [...map.values()].sort((a, b) => a.photographer.localeCompare(b.photographer));
 }
 
-const providerName = (p: string) => p.charAt(0).toUpperCase() + p.slice(1);
+const providerName = (p: string, entries: ManifestEntry[]) =>
+  entries.find((e) => e.provider === p)?.license.providerName ?? p.charAt(0).toUpperCase() + p.slice(1);
+const providerUrl = (p: string, entries: ManifestEntry[]) => entries.find((e) => e.provider === p)?.license.providerUrl;
 
 export function formatCredits(credits: Credit[], entries: ManifestEntry[], format: CreditsFormat): string {
   if (format === "json") return JSON.stringify({ credits, photos: entries }, null, 2) + "\n";
@@ -43,20 +45,22 @@ export function formatCredits(credits: Credit[], entries: ManifestEntry[], forma
       const links = c.photos
         .map((p, i) => `[${c.photos.length > 1 ? `photo ${i + 1}` : "photo"}](${p.pageUrl})`)
         .join(", ");
-      return `- ${who} via ${providerName(c.provider)} (${links})`;
+      const name = providerName(c.provider, entries);
+      const home = providerUrl(c.provider, entries);
+      return `- ${who} on ${home ? `[${name}](${home})` : name} (${links})`;
     });
     const lic = [...licenses].map(
-      ([p, l]) => `_${providerName(p)}: [${l.name}](${l.url})${l.attributionRequired ? " (attribution required)" : ""}_`,
+      ([p, l]) => `_${providerName(p, entries)}: [${l.name}](${l.url})${l.attributionRequired ? " (attribution required)" : ""}_`,
     );
     return ["## Photo credits", "", ...lines, "", ...lic].join("\n") + "\n";
   }
 
   const lines = credits.map((c) => {
     const count = c.photos.length > 1 ? dim(` (${c.photos.length} photos)`) : "";
-    return `  ${bold(c.photographer)}${count}  ${dim(c.photographerUrl ? link(c.photographerUrl) : providerName(c.provider))}`;
+    return `  ${bold(c.photographer)}${count}  ${dim(c.photographerUrl ? link(c.photographerUrl) : providerName(c.provider, entries))}`;
   });
   const lic = [...licenses].map(([p, l]) =>
-    dim(`${providerName(p)}: ${l.name} ${link(l.url)}${l.attributionRequired ? " (attribution required)" : ""}`),
+    dim(`${providerName(p, entries)}: ${l.name} ${link(l.url)}${l.attributionRequired ? " (attribution required)" : ""}`),
   );
   return [bold("Photos by"), ...lines, "", ...lic].join("\n") + "\n";
 }

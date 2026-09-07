@@ -29,7 +29,8 @@ ${bold("Usage")}
   fabpix download <id…>         Save photo(s) to disk (+ fabpix.manifest.json with credits)
   fabpix credits [dir]          Attribution list from a folder's manifest (--format text|markdown|json)
   fabpix open <id>              Open the photo's web page in your browser
-  fabpix auth set <key>         Store an API key   (or export PEXELS_API_KEY)
+  fabpix auth set <key>         Store an API key   (or export PEXELS_API_KEY / UNSPLASH_ACCESS_KEY)
+                                add --provider unsplash to store an Unsplash key
   fabpix auth status            Check which key is in use and whether it works
   fabpix cache clear            Remove cached API responses and thumbnails
   fabpix config                 Show effective settings and where they came from
@@ -42,7 +43,7 @@ ${bold("Options")}
   -n, --per-page <n>     Results per page (default: fills the screen; max 80)
   -p, --page <n>         Page number
       --orientation <o>  landscape | portrait | square
-      --color <c>        Colour filter, e.g. red or #ff0000
+      --color <c>        Colour filter (pexels: red or #ff0000; unsplash: red, blue, black_and_white, …)
       --size <s>         search: min size (large|medium|small)
                          download: variant (original|large2x|large|medium|small…)
   -o, --out <path>       download: directory or file path
@@ -81,6 +82,8 @@ ${bold("Examples")}
   fabpix show 1054666
   fabpix download 1054666 --size large2x -o ~/Pictures
   fabpix search cats --json | jq '.photos[].pageUrl'
+  fabpix search cats -P unsplash            # or set "provider": "unsplash" in .fabpixrc
+  fabpix show unsplash:Zx8RdG0h_Yk           # ids can carry a provider prefix
 `;
 
 function fail(message: string, hint?: string): never {

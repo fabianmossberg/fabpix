@@ -189,11 +189,14 @@ export function readSourceOrEmpty(source: SettingsSource): Settings {
 
 /**
  * Resolve an API key for a provider. Precedence:
- *   FABPIX_<PROVIDER>_KEY  →  <PROVIDER>_API_KEY  →  settings
+ *   FABPIX_<PROVIDER>_KEY  →  <PROVIDER>_API_KEY / <PROVIDER>_ACCESS_KEY  →  settings
  */
 export function resolveApiKey(provider: string, settings: Settings, env: NodeJS.ProcessEnv = process.env): string | undefined {
   const upper = provider.toUpperCase();
-  return env[`FABPIX_${upper}_KEY`] || env[`${upper}_API_KEY`] || settings.providers?.[provider]?.apiKey || undefined;
+  return (
+    env[`FABPIX_${upper}_KEY`] || env[`${upper}_API_KEY`] || env[`${upper}_ACCESS_KEY`] ||
+    settings.providers?.[provider]?.apiKey || undefined
+  );
 }
 
 /** Dotted-path get/set helpers for `fabpix config set preview.layout list`. */
