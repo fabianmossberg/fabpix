@@ -1,9 +1,9 @@
-import type { Provider } from "../providers/types.ts";
-import { fetchBytes } from "../http.ts";
+import type { Provider } from "@fabianmossberg/fabpix-core";
 import { renderBlock } from "../render/preview.ts";
 import { detectProtocol, terminalColumns } from "../render/terminal.ts";
 import { bold, dim, cyan, link } from "../render/style.ts";
 import { orientationOf } from "../format.ts";
+import { fetchBytes } from "@fabianmossberg/fabpix-core";
 
 export interface ShowOptions {
   id: string;

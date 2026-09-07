@@ -238,13 +238,20 @@ Providers implement the small `Provider` interface in `src/providers/types.ts` a
 
 ## Development
 
+The repo is a Bun workspace:
+
+| Package | npm name | What |
+|---|---|---|
+| `packages/core` | `@fabianmossberg/fabpix-core` | Providers, settings, manifest. Shared with build-time tooling |
+| `packages/cli` | `@fabianmossberg/fabpix` | The `fabpix` command; bundles core, ships as npm package and Homebrew binary |
+
 ```sh
 bun install
-bun run dev search cats        # run from source (loads .env automatically)
-bun test
+bun run dev search cats        # run the CLI from source (loads .env automatically)
+bun test                       # all packages
 bun run typecheck
-bun run build                  # dist/fabpix.js  — the npm package (Node target)
-bun run compile                # bin/fabpix      — single native binary
+bun run build                  # packages/*/dist
+bun run compile                # packages/cli/bin/fabpix — single native binary
 ```
 
 Releases are automatic: release-please turns conventional commits on master into a release PR; merging it tags the version, builds binaries for macOS/Linux, publishes to npm and updates the Homebrew tap.

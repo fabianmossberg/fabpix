@@ -5,6 +5,9 @@
 #   2. Merging that PR creates the vX.Y.Z tag + GitHub release.
 #   3. The jobs below then build binaries, attach them, publish to npm, and
 #      push the Homebrew formula to fabianmossberg/homebrew-tap.
+# Two packages are versioned independently: packages/cli (tag vX.Y.Z, npm
+# @fabianmossberg/fabpix, Homebrew) and packages/core (tag core-vX.Y.Z, npm
+# @fabianmossberg/fabpix-core).
 name: Release
 on:
   push:
@@ -20,9 +23,10 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     outputs:
-      release_created: ${{ steps.rp.outputs.release_created }}
-      tag_name: ${{ steps.rp.outputs.tag_name }}
-      version: ${{ steps.rp.outputs.version }}
+      release_created: ${{ steps.rp.outputs['packages/cli--release_created'] }}
+      tag_name: ${{ steps.rp.outputs['packages/cli--tag_name'] }}
+      version: ${{ steps.rp.outputs['packages/cli--version'] }}
+      core_released: ${{ steps.rp.outputs['packages/core--release_created'] }}
     steps:
       - uses: googleapis/release-please-action@v4
         id: rp
@@ -43,7 +47,7 @@ jobs:
           set -euo pipefail
           mkdir -p release
           for t in darwin-arm64 darwin-x64 linux-x64 linux-arm64; do
-            bun build src/cli.ts --compile --target=bun-$t --outfile=build/$t/fabpix
+            bun build packages/cli/src/cli.ts --compile --target=bun-$t --outfile=build/$t/fabpix
             tar -C build/$t -czf release/fabpix-$t.tar.gz fabpix
           done
           (cd release && sha256sum *.tar.gz > checksums.txt && cat checksums.txt)
@@ -71,7 +75,33 @@ jobs:
           registry-url: https://registry.npmjs.org
       - run: bun install --frozen-lockfile
       - run: bun run build
-      - run: npm publish --provenance --access public
+      - name: Publish @fabianmossberg/fabpix
+        working-directory: packages/cli
+        run: |
+          npm pkg delete devDependencies   # workspace:* specs are for bun; the bundle has no runtime deps
+          npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  npm-core:
+    needs: release-please
+    if: needs.release-please.outputs.core_released == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - run: bun install --frozen-lockfile
+      - name: Publish @fabianmossberg/fabpix-core
+        working-directory: packages/core
+        run: |
+          bun run build
+          npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

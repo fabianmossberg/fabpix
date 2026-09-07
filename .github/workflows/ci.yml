@@ -16,9 +16,10 @@ jobs:
       - run: bun run typecheck
       - run: bun test
       - run: bun run build
-      - name: Smoke test the Node bundle
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: node dist/fabpix.js --version
-      - run: bun run compile && ./bin/fabpix --help
+      - name: Smoke test the Node bundle and the compiled binary
+        run: |
+          node packages/cli/dist/fabpix.js --version
+          bun run compile && ./packages/cli/bin/fabpix --help >/dev/null

@@ -1,8 +1,5 @@
 import pkg from "../package.json" with { type: "json" };
 import { parseArgs, str, int, bool } from "./args.ts";
-import { loadSettings, type Scope } from "./config.ts";
-import { getProvider, getProviders, resolvePhotoRef, selectProviders, providerNames, DEFAULT_PROVIDER } from "./providers/index.ts";
-import { ProviderError, type Orientation } from "./providers/types.ts";
 import { listPhotos, type Layout } from "./commands/list.ts";
 import { showPhoto } from "./commands/show.ts";
 import { downloadPhotos } from "./commands/download.ts";
@@ -10,10 +7,9 @@ import { openExternal } from "./commands/open.ts";
 import { authSet, authStatus } from "./commands/auth.ts";
 import { configGet, configInit, configPaths, configSet, configShow } from "./commands/config.ts";
 import { credits, CREDITS_FORMATS, type CreditsFormat } from "./commands/credits.ts";
-import { METADATA_MODES, type MetadataMode } from "./manifest.ts";
-import { clearCache, cacheDir } from "./cache.ts";
 import { bold, dim, red, yellow } from "./render/style.ts";
 import { detectProtocol, insideTmux } from "./render/terminal.ts";
+import { loadSettings, type Scope, getProvider, getProviders, resolvePhotoRef, selectProviders, providerNames, DEFAULT_PROVIDER, ProviderError, type Orientation, METADATA_MODES, type MetadataMode, clearCache, cacheDir } from "@fabianmossberg/fabpix-core";
 
 const BOOLEANS = ["json", "preview", "help", "version", "open", "force", "quiet", "pager", "global", "local"];
 const ALIASES: Record<string, string> = {

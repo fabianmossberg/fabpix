@@ -1,4 +1,4 @@
-import type { Photo } from "./providers/types.ts";
+import type { Photo } from "@fabianmossberg/fabpix-core";
 import { bold, dim, cyan, link } from "./render/style.ts";
 
 export function orientationOf(p: Photo): "landscape" | "portrait" | "square" {

@@ -1,11 +1,9 @@
 import { mkdirSync, writeFileSync, existsSync, statSync } from "node:fs";
 import { join, resolve, basename, dirname } from "node:path";
-import type { Provider, Photo } from "../providers/types.ts";
-import { ProviderError } from "../providers/types.ts";
-import { fetchBytes } from "../http.ts";
+import type { Provider, Photo } from "@fabianmossberg/fabpix-core";
 import { extensionFromUrl, slugify } from "../format.ts";
 import { dim, green } from "../render/style.ts";
-import { readManifest, relativeTo, upsert, writeManifest, writeSidecar, type MetadataMode } from "../manifest.ts";
+import { ProviderError, fetchBytes, readManifest, relativeTo, upsert, writeManifest, writeSidecar, type MetadataMode } from "@fabianmossberg/fabpix-core";
 
 export interface DownloadOptions {
   ids: string[];

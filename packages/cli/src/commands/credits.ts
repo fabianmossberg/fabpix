@@ -1,8 +1,7 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { manifestPath, readManifest, type ManifestEntry } from "../manifest.ts";
-import { ProviderError } from "../providers/types.ts";
 import { bold, dim, link } from "../render/style.ts";
+import { manifestPath, readManifest, type ManifestEntry, ProviderError } from "@fabianmossberg/fabpix-core";
 
 export type CreditsFormat = "text" | "markdown" | "json";
 export const CREDITS_FORMATS: readonly CreditsFormat[] = ["text", "markdown", "json"];

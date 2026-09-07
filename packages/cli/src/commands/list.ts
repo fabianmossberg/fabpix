@@ -1,11 +1,11 @@
-import type { Photo, PhotoPage } from "../providers/types.ts";
-import { fetchBytes } from "../http.ts";
+import type { Photo, PhotoPage } from "@fabianmossberg/fabpix-core";
 import { chafaLines, nativeImageSequence, renderBlock } from "../render/preview.ts";
 import { renderGridRow, tilesPerRow, type GridTile } from "../render/grid.ts";
 import { detectProtocol, insideTmux, terminalColumns, terminalRows, type ImageProtocol } from "../render/terminal.ts";
 import { bold, dim, cyan } from "../render/style.ts";
 import { photoLines, formatNumber, truncateWidth } from "../format.ts";
 import { pagerAvailable, waitForKey } from "../pager.ts";
+import { fetchBytes } from "@fabianmossberg/fabpix-core";
 
 export type Layout = "grid" | "list";
 
